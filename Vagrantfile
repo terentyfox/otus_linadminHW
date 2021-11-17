@@ -4,7 +4,6 @@
 MACHINES = {
   :otuslinux => {
         :box_name => "centos/7",
-        :ip_addr => '192.168.11.101',
     :disks => {
         :sata1 => {
             :dfile => './sata1.vdi',
@@ -40,7 +39,7 @@ MACHINES = {
             box.vm.box = boxconfig[:box_name]
             box.vm.host_name = boxname.to_s
             #box.vm.network "forwarded_port", guest: 3260, host: 3260+offset
-             box.vm.network "private_network", ip: boxconfig[:ip_addr]
+            # box.vm.network "private_network", ip: boxconfig[:ip_addr]
              box.vm.provider :virtualbox do |vb|
                      vb.customize ["modifyvm", :id, "--memory", "256"]
                      needsController = false
@@ -61,7 +60,7 @@ MACHINES = {
        box.vm.provision "shell", inline: <<-SHELL
             mkdir -p ~root/.ssh
                 cp ~vagrant/.ssh/auth* ~root/.ssh
-            yum install -y mdadm smartmontools hdparm gdisk
+            yum install -y mdadm smartmontools hdparm gdisk mc
             mdadm --zero-superblock --force /dev/sd{b,c,d,e,f}
             mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sd{b,c,d,e,f}
             cat /proc/mdstat
@@ -79,9 +78,8 @@ MACHINES = {
             for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
             echo "#NEW DEVICE" >> /etc/fstab
             for i in $(seq 1 5); do echo `sudo blkid /dev/md0p$i | awk '{print $2}'` /u0$i ext4 defaults 0 0 >> /etc/fstab; done
-            sed -i '65s/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-            systemctl restart sshd
-        SHELL
+
+            SHELL
         end
     end
   end
