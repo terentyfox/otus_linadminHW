@@ -1,0 +1,55 @@
+Просмотр текущего состояния пула и фс:
+Script started on Thu Nov 25 06:33:28 2021
+]0;vagrant@otuslinux:~[?1034h[vagrant@otuslinux ~]$ zpool status
+  pool: otus
+ state: ONLINE
+  scan: none requested
+config:
+
+	NAME                                 STATE     READ WRITE CKSUM
+	otus                                 ONLINE       0     0     0
+	  mirror-0                           ONLINE       0     0     0
+	    /home/vagrant/zpoolexport/filea  ONLINE       0     0     0
+	    /home/vagrant/zpoolexport/fileb  ONLINE       0     0     0
+
+errors: No known data errors
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs list
+NAME             USED  AVAIL     REFER  MOUNTPOINT
+otus            2.14M   350M       24K  /otus
+otus/hometask2  1.88M   350M     1.88M  /otus/hometask2
+
+Проверка файла снимка в каталоге:
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ ls -l
+total 20900
+-rw-rw-r--. 1 vagrant vagrant 8600828 Nov 12 14:14 kernel-lt-doc-5.4.159-1.el7.elrepo.noarch.rpm
+-rw-rw-r--. 1 vagrant vagrant 5432736 Nov 23 06:33 otus_task2.file
+-rw-rw-r--. 1 vagrant vagrant   66494 Nov 22 15:14 poolconfig
+-rw-rw-r--. 1 vagrant vagrant    9104 Nov 23 16:05 task10
+drwxrwxr-x. 3 vagrant vagrant      25 Nov 25 04:18 task2
+-rw-rw-r--. 1 vagrant vagrant    3975 Nov 25 05:56 task20
+-rw-rw-r--. 1 vagrant vagrant       0 Nov 25 06:33 task30
+drwxrwxr-x. 3 vagrant vagrant      70 Nov 23 08:57 tst
+-rw-rw-r--. 1 vagrant vagrant 7275140 Nov 23 02:10 zfs_task1.tar.gz
+drwxr-xr-x. 2 vagrant vagrant      32 May 15  2020 zpoolexport
+
+Восстановление снимка фс:
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo zfs receive otus/otus_task2 < ~/otus_task2.file
+
+Просмотр изменений:
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs list
+NAME              USED  AVAIL     REFER  MOUNTPOINT
+otus             5.02M   347M       25K  /otus
+otus/hometask2   1.88M   347M     1.88M  /otus/hometask2
+otus/otus_task2  2.83M   347M     2.83M  /otus/otus_task2
+
+Поиск в полученной фс файла с сообщением:
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$  find /otus/otus_task2 -name secret_message
+/otus/otus_task2/task1/file_mess/secret_message
+
+Выдача сообщения на экран:
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$  cat /otus/otus_task2/task1/file_mess/secret_message
+https://github.com/sindresorhus/awesome
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ exit
+exit
+
+Script done on Thu Nov 25 06:35:50 2021

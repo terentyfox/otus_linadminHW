@@ -1,0 +1,136 @@
+Задание по сравнению типов сжатия в  
+До начала записи:
+1. установлена zfs
+2. в каталог ~/tst распакован файл kernel-lt-doc-5.4.159-1.el7.elrepo.noarch.rpm
+Запись script начата с проверки запуска zfs
+ 
+Script started on Tue Nov 23 15:52:47 2021
+]0;vagrant@otuslinux:~[?1034h[vagrant@otuslinux ~]$ lsmod | grep zfs
+[01;31m[Kzfs[m[K                  3986816  6 
+zunicode              331170  1 [01;31m[Kzfs[m[K
+zlua                  151525  1 [01;31m[Kzfs[m[K
+zcommon                89551  1 [01;31m[Kzfs[m[K
+znvpair                94388  2 [01;31m[Kzfs[m[K,zcommon
+zavl                   15167  1 [01;31m[Kzfs[m[K
+icp                   301854  1 [01;31m[Kzfs[m[K
+spl                   104299  5 icp,[01;31m[Kzfs[m[K,zavl,zcommon,znvpair
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0  250M  0 disk 
+|-sda1   8:1    0  240M  0 part 
+`-sda9   8:9    0    8M  0 part 
+sdb      8:16   0  250M  0 disk 
+|-sdb1   8:17   0  240M  0 part 
+`-sdb9   8:25   0    8M  0 part 
+sdc      8:32   0  250M  0 disk 
+|-sdc1   8:33   0  240M  0 part 
+`-sdc9   8:41   0    8M  0 part 
+sdd      8:48   0  250M  0 disk 
+|-sdd1   8:49   0  240M  0 part 
+`-sdd9   8:57   0    8M  0 part 
+sde      8:64   0   40G  0 disk 
+`-sde1   8:65   0   40G  0 part /
+
+Создаём пулы и файловые системы:
+
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ create        zpool create wnpool1 mirror sda sdb
+cannot open '/dev/sda': Permission denied
+cannot open '/dev/sdb': Permission denied
+cannot create 'wnpool1': permission denied
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zpool create wnpool1 mirror sda sdb[vagrant@otuslinux ~]$ lsblk[Kzpool create wnpool1 mirror sda sdb[1@s[1@u[1@d[1@o[1@ 
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo zpool create wnpool1 mirror sda sdb[1P[1@21 mi[1P[1@l1[1P[1@2 mirror sda[1P[1@c sdb d
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo      z zpool status
+  pool: wnpool1
+ state: ONLINE
+  scan: none requested
+config:
+
+	NAME        STATE     READ WRITE CKSUM
+	wnpool1     ONLINE       0     0     0
+	  mirror-0  ONLINE       0     0     0
+	    sda     ONLINE       0     0     0
+	    sdb     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: wnpool2
+ state: ONLINE
+  scan: none requested
+config:
+
+	NAME        STATE     READ WRITE CKSUM
+	wnpool2     ONLINE       0     0     0
+	  mirror-0  ONLINE       0     0     0
+	    sdc     ONLINE       0     0     0
+	    sdd     ONLINE       0     0     0
+
+errors: No known data errors
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs list
+NAME      USED  AVAIL     REFER  MOUNTPOINT
+wnpool1  82.5K   112M       24K  /wnpool1
+wnpool2  82.5K   112M       24K  /wnpool2
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs create wnppool1/[1@-[1@o[1@ [1@c[1@o[1@m[1@p[1@r[1@e[1@s[1@s[1@i[1@o[1@n[1@=[1@g[1@z[1@i[1@p[1@-[1@9[1@ wnppool1/gzip
+cannot create 'wnppool1/gzip': no such pool 'wnppool1'
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs create -o compression=gzip-9 wnppool1/gzipp[1P
+cannot create 'wnpool1/gzip': permission denied
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs create -o compression=gzip-9 wnpool1/gzip[1@s[1@u[1@d[1@o[1@ 
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo zfs create -o compression=gzip-9 wnpool1/gzip    zle[1P[1P[1P[1P[1P[1P[1@z[1@l[1@e
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo zfs create -o compression=zle wnpool1/zle[1P[1P[1P[1@l[1@z[1@j[1@b wnpool1[1P[1@2/zle   lzjb
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo zfs create -o compression=lzjb wnpool2/lzjb[1P[1P[1@4 wnpool2/lzjb  4
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ zfs list
+NAME           USED  AVAIL     REFER  MOUNTPOINT
+wnpool1        149K   112M       26K  /wnpool1
+wnpool1/gzip    24K   112M       24K  /wnpool1/gzip
+wnpool1/zle     24K   112M       24K  /wnpool1/zle
+wnpool2        149K   112M       26K  /wnpool2
+wnpool2/lz4     24K   112M       24K  /wnpool2/lz4
+wnpool2/lzjb    24K   112M       24K  /wnpool2/lzjb
+
+Итог - четыре файловые системы с разными алгоритмами сжатия, имена систем соответствуют применённому в системе алгоритму сжатия
+Проверяем объём каталога tst и копируем его во все новые фс:
+
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ du -msx ./*
+9	./kernel-lt-doc-5.4.159-1.el7.elrepo.noarch.rpm
+6	./otus_task2.file
+1	./poolconfig
+1	./task10
+55	./tst
+7	./zfs_task1.tar.gz
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo cp -a /home/vagrant/tst /wnpool1/gzip
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo cp -a /home/vagrant/tst /wnpool1/zle
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo cp -a /home/vagrant/tst /wnpool1/lzjb
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ sudo cp -a /home/vagrant/tst /wnpool2/lz4
+
+Смотрим, что изменилось в заполнении фс, разница заметна:
+
+[vagrant@otuslinux ~]$ zfs list
+NAME           USED  AVAIL     REFER  MOUNTPOINT
+wnpool1       64.2M  47.7M       26K  /wnpool1
+wnpool1/gzip  22.1M  47.7M     22.1M  /wnpool1/gzip
+wnpool1/zle   41.9M  47.7M     41.9M  /wnpool1/zle
+wnpool2       57.4M  54.5M       26K  /wnpool2
+wnpool2/lz4   27.6M  54.5M     27.6M  /wnpool2/lz4
+wnpool2/lzjb  29.7M  54.5M     29.7M  /wnpool2/lzjb
+
+Уточняем алгоритм сжатия:
+
+[Avagrant@otuslinux ~]$ zfs get compression /wnpool1/gzip /wnpool1/zle /wnpool2/lz4 /wnpool2/lzjb
+NAME          PROPERTY     VALUE     SOURCE
+wnpool1/gzip  compression  gzip-9    local
+wnpool1/zle   compression  zle       local
+wnpool2/lz4   compression  lz4       local
+wnpool2/lzjb  compression  lzjb      local
+
+Определяем чемпиона:
+[A[vagrant@otuslinux ~]$ zfs get compressratio /wnpool1/gzip /wnpool1/zle /wnpool2/lz4 /wnpool2/lzjb
+
+NAME          PROPERTY       VALUE  SOURCE
+wnpool1/gzip  compressratio  2.18x  -
+wnpool1/zle   compressratio  1.11x  -
+wnpool2/lz4   compressratio  1.72x  -
+wnpool2/lzjb  compressratio  1.59x  -
+]0;vagrant@otuslinux:~[vagrant@otuslinux ~]$ exit
+exit
+Лучше всех сжал gzip-9
+
+Script done on Tue Nov 23 16:05:52 2021
